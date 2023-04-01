@@ -1,8 +1,12 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, send_from_directory, url_for
 import face_recognition
 import cv2
 import numpy as np
 import os
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from flask_uploads import UploadSet, IMAGES, configure_uploads
+from wtforms import SubmitField
 
 # This is a demo of running face recognition on live video from your webcam. It's a little more complicated than the
 # other example, but it includes some basic performance tweaks to make things run a lot faster:
@@ -12,6 +16,23 @@ import os
 # PLEASE NOTE: This example requires OpenCV (the `cv2` library) to be installed only to read from your webcam.
 # OpenCV is *not* required to use the face_recognition library. It's only required if you want to run this
 # specific demo. If you have trouble installing it, try any of the other demos that don't require it instead.
+
+app=Flask(__name__)
+
+app.config["SECRET_KEY"] = "secret"
+app.config["UPLOADED_PHOTOS_DEST"] = "photos"
+photos = UploadSet("photos")
+configure_uploads(app, photos)
+
+class UploadForm(FlaskForm):
+    photo = FileField(
+        validators=[
+        FileAllowed(photos, "Only images are allowed"),
+        FileRequired("File field should not be empty")
+        ]
+    )
+    submit = SubmitField("Upload")
+
 
 app=Flask(__name__)
 
@@ -46,7 +67,7 @@ known_face_names = [
 face_locations = []
 face_encodings = []
 face_names = []
-
+process_this_frame = True
 
 def GenerateFrames():
     while True:
@@ -112,29 +133,27 @@ def GenerateFrames():
 
 @app.route('/')
 def index():
-    return render_template('index_1.html')
-
-
-# Result checker html page
-@app.route("/submit", methods=["POST", "GET"])
-def submit():
-    total_score=0
-    if request.method=="POST":
-        science = float(request.form["science"])
-        math = float(request.form["maths"]) 
-        c = float(request.form["c"]) 
-        data_science = float(request.form["datascience"])
-        total_score = (science+math+c+data_science)/4
-    res="" 
-    if total_score>=50:
-        res="success"
-    else:
-        res="fail"
-    return redirect(url_for(res, score=total_score))
+    return render_template('index.html')
 
 @app.route('/video_feed')
 def video_feed():
     return Response(GenerateFrames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+
+@app.route("/photos/<filename>")
+def get_file(filename):
+    return send_from_directory(app.config["UPLOADED_PHOTOS_DEST"], filename)
+
+
+@app.route("/upload", methods=["GET", "POST"])
+def upload_image():
+    form = UploadForm()
+    if form.validate_on_submit():
+        filename = photos.save(form.photo.data)
+        file_url = url_for("get_file", filename=filename)
+    else:
+        file_url = None
+    return render_template("upload.html", form=form, file_url=file_url)
 
 
 if __name__=='__main__':

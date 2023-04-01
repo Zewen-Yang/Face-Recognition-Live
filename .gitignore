@@ -1,3 +1,4 @@
 face
 # information for Eclipse / Flash Builder.
 photos/*
+.vscode
