@@ -112,7 +112,7 @@ def GenerateFrames():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index_1.html')
 
 
 # Result checker html page

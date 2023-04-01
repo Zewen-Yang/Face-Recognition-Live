@@ -133,7 +133,7 @@ def GenerateFrames():
 
 @app.route('/')
 def index():
-    return render_template('index_9.html')
+    return render_template('index_2.html')
 
 @app.route('/video_feed')
 def video_feed():
