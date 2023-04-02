@@ -19,7 +19,8 @@ from wtforms import SubmitField
 
 app=Flask(__name__)
 
-app.config["SECRET_KEY"] = "secret"
+SECRET_KEY = os.urandom(32)
+app.config['SECRET_KEY'] = SECRET_KEY
 app.config["UPLOADED_PHOTOS_DEST"] = "photos"
 photos = UploadSet("photos")
 configure_uploads(app, photos)
